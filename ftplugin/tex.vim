@@ -3,7 +3,7 @@
 " Maintainer:   Srinath Avadhanula
 " Email:        srinath@eecs.berkeley.edu
 " URL:          http://vim.sourceforge.net/scripts/script.php?script_id=93
-" Last Change:  2001 Dec 7
+" Last Change:  2001 Dec 9
 "
 " Help: 
 " This file type plugin intended for use with vim 6.0+ provides some insert
@@ -39,6 +39,8 @@
 " the greek alphabet is mapped into the english alphabet.
 "
 " Changes:
+" 2001 Dec 9: 1. took some stuff from auctex.vim
+"                such as smart quotes and dollar, etc.
 " 2001 Dec 7: 1. changed things so that most mappings emulate the operator
 "                pending mode. this greatly facilitates typing by not
 "                requiring the LHS to be typed quickly. one can infact type
@@ -56,15 +58,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 exec "setlocal isk=".&isk.",:"
-
-imap <buffer> FRAC \frac{}{}hhi
-inoremap <buffer> _ _{}i
-inoremap <buffer> ^ ^{}i
-inoremap <buffer> $$ $$i
-inoremap <buffer> == &=&
-
-nmap <buffer> >L :LATEX<cr>
-
 
 " --------------------------------------------------------------------------- 
 "                  begin user customizable mode
@@ -102,11 +95,18 @@ let g:btb  = '\begin{tabular}{}\end{tabular}ki'
 let g:bta  = '\begin{table}\centering\begin{tabular}{}\end{tabular}\label{tab:}\caption{}\end{table}kkkkk$i'
 let g:pic  = '\begin{picture}(4,4)\put(0.5,0){\framebox(4,4){}}\end{picture}k$hi'
 let g:mat  = '\left[\begin{array}{}\end{array}\right]kk$i'
+let g:verb = '\begin{verbatim}\end{verbatim}O'
 let g:frac = ' \frac{}{}hhi'
 let g:dot  = '\dot{}i'
 let g:ddot = '\ddot{}i'
+let g:vb   = '\verb||i'
+let g:bf   = '{\bf }i'
+let g:em   = '{\em }i'
+let g:it   = '{\it }i'
+let g:mb   = '\mbox{}i'
+let g:sq   = '\sqrt{}i'
 
-let g:macros = '\<\(tab\|bar\|ben\|bit\|beq\|bqn\|bfg\|bfe\|btb\|bta\|pic\|mat\|frac\|dot\|ddot\)\>'
+let g:macros = '\<\(tab\|bar\|ben\|bit\|beq\|bqn\|bfg\|bfe\|btb\|bta\|pic\|mat\|frac\|dot\|ddot\|vb\|verb\|bf\|em\|it\|mb\|sq\)\>'
 
 imap <buffer> <tab> <c-r>=TeXTabWrapper()<cr>
 
@@ -172,7 +172,6 @@ function! TeXTabWrapper()
 	" first if the <tab> is pressed at the beginning of a line or there is no
 	" keyword before it, just return <tab>
 	if !col || getline('.')[col - 1] !~ '\k'
-		call PrintError('returning tab')
         return "\<tab>"
     end
 
@@ -180,22 +179,18 @@ function! TeXTabWrapper()
 	" if user presses <tab> after entering strings like '\q'
 	" then its a tex symbol (in this case \theta)
 	if (col - 1) > 0 && getline('.')[col - 2] == '\'
-		call PrintError('falling here returning symbol')
 		return GetGreekChar(getline('.')[col - 1])
 	" if not, then attempt to complete it as a tex macro
 	elseif macro != '0'
-		call PrintError('falling here returning macro')
-		normal vbx`
+    	normal hvbx
 		return macro
 	" if its not a macro and InsertTabWrapper exists, then give over control
 	" to that function.
 	elseif exists('*InsertTabWrapper')
-		call PrintError('falling here returning overall tab wrapper')
 		return InsertTabWrapper("forward")
 	" not a symbol or macro and InsertTabWrapper not there, return <tab>
 	" again.
 	else
-		call PrintError('nothing returning')
 		return "\<tab>"
 	end
 endfunction
@@ -212,18 +207,111 @@ endfunction
 function! ProcessStub()
 	let column = col('.')-1
 	let word = ''
-	let character = '`'
-	while column > 0 && character !~ '\s'
-		let character = getline('.')[column-1]
+	let character = getline('.')[column-1]
+	while column > 0 && character =~ '\w'
 		let word = character.word
 		let column = column - 1
-		call PrintError('column = '.column.', character = '.character)
+		let character = getline('.')[column-1]
 	endwhile
-	call PrintError('word = '.word)
 	if word =~ g:macros
 		exe 'return g:'.word
 	else
-		call PrintError('returning 0')
 		return '0'
 	end
 endfunction
+
+
+" ====================================================================
+" the functions in this section taken from auctex.vim
+" Smart quotes.  Thanks to Ron Aaron <ron@mossbayeng.com>.
+" typing " after whitespace results in `` otherwise ''
+function! s:TexQuotes()
+    let s:insert = "''"
+    let s:left = getline(line("."))[col(".")-2]
+    if s:left == ' ' || s:left == '' || s:left == '    '   " Tab
+        let s:insert = '``'
+    elseif s:left == '\'
+        let s:insert = '"'
+    endif
+    return s:insert
+endfunction
+imap <buffer> " <C-R>=<SID>TexQuotes()<CR>
+
+" typing ... results in \dots
+iab <buffer> ... \dots
+
+" Typing __ results in _{}
+function! s:SubBracket()
+    let s:insert = "_"
+    let s:left = getline(line("."))[col(".")-2]
+    if s:left == '_'
+		let s:insert = "{}\<Left>"
+    endif
+    return s:insert
+endfunction
+inoremap <buffer> _ <C-R>=<SID>SubBracket()<CR>
+
+" Typing ^^ results in ^{}
+function! s:SuperBracket()
+    let s:insert = "^"
+    let s:left = getline(line("."))[col(".")-2]
+    if s:left == '^'
+		let s:insert = "{}\<Left>"
+    endif
+    return s:insert
+endfunction
+inoremap <buffer> ^ <C-R>=<SID>SuperBracket()<CR>
+" ====================================================================
+
+" Typing $$ results in $$ but with cursor before the last $
+function! s:Dollar()
+    let s:insert = "$"
+    let s:left = getline(line("."))[col(".")-2]
+    if s:left == '$'
+		let s:insert = "$\<Left>"
+    endif
+    return s:insert
+endfunction
+inoremap <buffer> $ <C-R>=<SID>Dollar()<CR>
+
+" typing == results in &=&
+iab <buffer> == &=&
+
+" this function runs the latex command on the currently open file. often times
+" the file being currently edited is only a fragment being \input'ed into some
+" master tex file. in this case, make a file called mainfile.latexmain in the
+" directory containig the file. in other words, if the current file is
+" ~/thesis/chapter.tex
+" so that doing "latex chapter.tex" doesnt make sense, then make a file called 
+" main.tex.latexmain 
+" in the ~/thesis directory. this will then run "latex main.tex" when
+" RunLaTeX() is called.
+"
+function! <SID>RunLaTeX()
+	let ext = expand("%:e")
+	if ext != 'tex' && ext != 'bb1'
+		echo "calling RunLaTeX from a non-tex file"
+		return
+	end
+	let dir = expand("%:p:h").'/'
+	let curd = getcwd()
+	exec 'cd '.expand("%:p:h")
+	if glob(dir.'*.latexmain') != ''
+		let lheadfile = glob(dir.'*.latexmain')
+		let mainfname = strpart(lheadfile,0,strlen(lheadfile)-strlen('.latexmain'))
+		if has("gui")
+			exec 'silent! !latex '.mainfname
+		else
+			exec '!latex '.mainfname
+		endif
+	else
+		if has("gui") 
+			!latex % 
+		else 
+			!latex %
+		endif
+	endif
+	exec 'cd '.curd
+endfunction
+nmap <buffer> >L :call <SID>RunLaTeX()<cr>
+

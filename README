@@ -1,0 +1,131 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=93
+
+This file type plugin intended provides some insert mode macros for the
+LaTeX typesetting language. The nice thing about these mappings is that
+they emulate the operator pending mode in the insert mode.  i.e, the user
+does NOT have to type the LHS in a hurry or without making mistakes. This
+facilitates using the macros greatly.
+
+See below for the detailed list of macros provided or just browe the file after downloading it.
+In brief, this file provides stubs for the most commonly used typsetting
+commands such as figures, matrices etc. As an example, the commonly used
+matrix element is provided. Typing
+
+mat<tab>
+
+in the insert mode will expand to the following familiar matrix element:
+
+\left[
+\begin{array}{_}
+\end{array}
+\right]
+
+with the cursor placed where the underscore is shown (note the underscore is
+not part of the macro, it just shows the cursor placement)
+NOTE: <tab> is part of the LHS of the mapping. however, the characters need
+      NOT be typed in quick succession as in most insert mode commands.
+
+See the section "ADDING" in the file in order to modify/add new mappings.
+
+A quick way to enter greek symbols is also provided. For example, typing
+'\q<tab>' will expand to \theta. (NOTE: quotes are not part of the LHS).
+See the section "SYMBOLS" in the file for adding/modifying the way the
+greek alphabet is mapped into the english alphabet. Again <tab> can be 
+conviniently pressed after a long time or after moving around and coming back.
+
+a few other shortcuts: 
+== expands to &=& (useful while writing eqnarrays) 
+$$ expands to $$ but the cursor is repositioned before the last $ (so you dont have to go back) 
+_ expands to _{} 
+^ expands to ^{} 
+
+============================================================================
+LIST OF AVAILABLE MACROS
+============================================================================
+
+1. TABLE: tab<tab>
+\begin{table}
+\centering
+\begin{tabular}{-}
+
+\end{tabular}
+\label{tab:}
+\caption{}
+\end{table}
+
+2. ARRAY: bar<tab>
+\left
+\begin{array}{-}
+
+\end{array}
+\right
+
+3. ENUMERATE: ben<tab>
+\begin{enumerate}
+\item -
+\end{enumerate}
+
+4. ITEMIZE:	bit<tab>
+\begin{itemize}
+\item -
+\end{itemize}
+
+
+5. EQUATION: beq<tab> 
+\begin{equation}
+-
+\end{equation}
+
+6. EQUATION ARRAY: bqn<tab> 
+\begin{eqnarray}
+-
+\end{eqnarray}
+
+6. EPS FIGURE: bfg<tab> 
+\begin{figure}[h]
+\centerline{\psfig{figure=-.eps}}
+\caption{}
+\label{fig:}
+\end{figure}
+
+7. EMPTY FIGURE: bfe<tab> 
+\begin{figure}
+\vspace{-}
+\caption{}
+\end{figure}
+
+8. TABULAR: btb<tab> 
+\begin{tabular}{-}
+
+\end{tabular}
+
+9. TABLE: bta<tab> 
+\begin{table}
+\centering
+\begin{tabular}{-}
+
+\end{tabular}
+\label{tab:}
+\caption{}
+\end{table}
+
+10. PICTURE: pic<tab> 
+\begin{picture}(4,4)
+\put(0.5,0){\framebox(4,4){-}}
+\end{picture}
+
+11. MATRIX: mat<tab> 
+\left[
+\begin{array}{-}
+\end{array}
+\right]
+
+12. FRAC: frac<tab> 
+\frac{-}{}
+
+13. DOT: dot<tab> 
+\dot{-}
+
+14. DOUBLE DOT: ddot<tab> 
+\ddot{-}
+
